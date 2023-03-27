@@ -68,9 +68,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	projectsSwitch := widget.NewSelect(projects, func(s string) {
+	loadUI := func(project string) *fyne.Container {
+		titleLabel := widget.NewLabel("Tables")
+		cl.ProjName = project
+		tables, _ := cl.ListTables()
 
+		createTableBtn := widget.NewButton("Create Table", func() {
+
+		})
+
+		UIContent := container.NewVBox(
+			container.NewHBox(titleLabel, createTableBtn),
+		)
+		for _, tableName := range tables {
+			UIContent.Add(widget.NewButton(tableName, func() {
+
+			}))
+		}
+
+		return UIContent
+	}
+
+	leftContent := container.NewVBox()
+	projectsSwitch := widget.NewSelect(projects, func(s string) {
+		content := loadUI(s)
+		leftContent.RemoveAll()
+		leftContent.Add(content)
+		leftContent.Refresh()
 	})
+
 	newProjectBtn := widget.NewButton("New Project", func() {
 		content := make([]*widget.FormItem, 0)
 		content = append(content, widget.NewFormItem("name", widget.NewEntry()))
@@ -78,6 +104,10 @@ func main() {
 			if b {
 				inputs := getFormInputs(content)
 				cl.CreateProject(inputs["name"])
+				content := loadUI(inputs["name"])
+				leftContent.RemoveAll()
+				leftContent.Add(content)
+				leftContent.Refresh()
 			}
 		}, myWindow)
 	})
@@ -87,7 +117,7 @@ func main() {
 		widget.NewSeparator(),
 	)
 
-	windowContent := container.NewBorder(topBar, nil, nil, nil, nil)
+	windowContent := container.NewBorder(topBar, nil, leftContent, nil, nil)
 
 	myWindow.SetContent(windowContent)
 	myWindow.Resize(fyne.NewSize(1200, 600))
