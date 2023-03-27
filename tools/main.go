@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -68,13 +69,30 @@ func main() {
 		os.Exit(1)
 	}
 
+	doRefreshChan := make(chan bool)
+
 	loadUI := func(project string) *fyne.Container {
 		titleLabel := widget.NewLabel("Tables")
 		cl.ProjName = project
 		tables, _ := cl.ListTables()
 
 		createTableBtn := widget.NewButton("Create Table", func() {
+			l := widget.NewLabel("statement")
+			statementEntry := widget.NewMultiLineEntry()
+			trueCreateTableFunc := func(b bool) {
+				if b {
+					cl.ProjName = project
+					err = cl.CreateTable(statementEntry.Text)
+					if err != nil {
+						dialog.ShowInformation("Error creating table", err.Error(), myWindow)
+					}
+					doRefreshChan <- true
+				}
+			}
+			dialogContent := container.New(&diags{}, l, statementEntry)
+			dialogContent.Resize(fyne.NewSize(600, 400))
 
+			dialog.ShowCustomConfirm("New Table", "Create", "Cancel", dialogContent, trueCreateTableFunc, myWindow)
 		})
 
 		UIContent := container.NewVBox(
@@ -96,6 +114,21 @@ func main() {
 		leftContent.Add(content)
 		leftContent.Refresh()
 	})
+
+	projectsSwitch.SetSelected("first_proj")
+	// refresh UI thread
+	go func() {
+		for {
+			<-doRefreshChan
+
+			content := loadUI(projectsSwitch.Selected)
+			leftContent.RemoveAll()
+			leftContent.Add(content)
+			leftContent.Refresh()
+
+			time.Sleep(time.Second)
+		}
+	}()
 
 	newProjectBtn := widget.NewButton("New Project", func() {
 		content := make([]*widget.FormItem, 0)
