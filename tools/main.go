@@ -17,6 +17,7 @@ import (
 
 func main() {
 	os.Setenv("FYNE_THEME", "dark")
+	os.Setenv("FYNE_SCALE", "0.9")
 
 	myApp := app.New()
 	myWindow := myApp.NewWindow("hanan: a more comfortable shell / terminal")
@@ -69,9 +70,68 @@ func main() {
 		os.Exit(1)
 	}
 
-	doRefreshChan := make(chan bool)
+	doRightRefreshChan := make(chan string)
+	doLeftRefreshChan := make(chan bool)
 
-	loadUI := func(project string) *fyne.Container {
+	mainContent := container.NewVBox()
+
+	getTableUI := func(projectName, tableName string) *fyne.Container {
+		vnum, _ := cl.GetCurrentTableVersionNum(tableName)
+		versionLabel := widget.NewLabel(fmt.Sprintf("Version: %d", vnum))
+		topTableBar := container.NewHBox()
+		utsBtn := widget.NewButton("Update Table Structure", func() {
+			l := widget.NewLabel("statement")
+			statementEntry := widget.NewMultiLineEntry()
+			vnum, _ := cl.GetCurrentTableVersionNum(tableName)
+			tableStructStmt, _ := cl.GetTableStructure(tableName, vnum)
+			statementEntry.SetText(tableStructStmt)
+
+			callbackFunc := func(b bool) {
+				if b {
+					cl.ProjName = projectName
+					err = cl.UpdateTableStructure(statementEntry.Text)
+					if err != nil {
+						dialog.ShowInformation("Error creating table", err.Error(), myWindow)
+					}
+					doLeftRefreshChan <- true
+				}
+			}
+			dialogContent := container.New(&diags{}, l, statementEntry)
+			dialogContent.Resize(fyne.NewSize(600, 400))
+
+			dialog.ShowCustomConfirm("Update Table Structure", "Update", "Cancel", dialogContent, callbackFunc, myWindow)
+		})
+
+		topTableBar.Add(versionLabel)
+		topTableBar.Add(utsBtn)
+
+		deleteTableBtn := widget.NewButton("Delete Table", func() {
+			deleteTableCallback := func(b bool) {
+				if b {
+					tables, _ := cl.ListTables()
+
+					err = cl.DeleteTable(tableName)
+					if err != nil {
+						dialog.ShowInformation("Error creating table", err.Error(), myWindow)
+					}
+					doLeftRefreshChan <- true
+					if len(tables) > 0 {
+						doRightRefreshChan <- tables[0]
+					} else {
+						doRightRefreshChan <- ""
+					}
+				}
+			}
+			dialog.ShowConfirm("Delete Table "+tableName+" Confirmation", "Do you really want to delete this table",
+				deleteTableCallback, myWindow)
+		})
+		topTableBar.Add(deleteTableBtn)
+
+		tableContent := container.NewVBox(topTableBar, widget.NewSeparator(), widget.NewLabel(tableName))
+		return tableContent
+	}
+
+	loadLeftUI := func(project string) *fyne.Container {
 		titleLabel := widget.NewLabel("Tables")
 		cl.ProjName = project
 		tables, _ := cl.ListTables()
@@ -86,7 +146,7 @@ func main() {
 					if err != nil {
 						dialog.ShowInformation("Error creating table", err.Error(), myWindow)
 					}
-					doRefreshChan <- true
+					doLeftRefreshChan <- true
 				}
 			}
 			dialogContent := container.New(&diags{}, l, statementEntry)
@@ -98,10 +158,15 @@ func main() {
 		UIContent := container.NewVBox(
 			container.NewHBox(titleLabel, createTableBtn),
 		)
-		for _, tableName := range tables {
-			UIContent.Add(widget.NewButton(tableName, func() {
 
-			}))
+		for _, tableName := range tables {
+			makeTableFunc := func(tableName string) func() {
+				return func() {
+					doRightRefreshChan <- tableName
+				}
+			}
+			tableBtn := widget.NewButton(tableName, makeTableFunc(tableName))
+			UIContent.Add(tableBtn)
 		}
 
 		return UIContent
@@ -109,22 +174,40 @@ func main() {
 
 	leftContent := container.NewVBox()
 	projectsSwitch := widget.NewSelect(projects, func(s string) {
-		content := loadUI(s)
+		content := loadLeftUI(s)
 		leftContent.RemoveAll()
 		leftContent.Add(content)
 		leftContent.Refresh()
 	})
 
 	projectsSwitch.SetSelected("first_proj")
-	// refresh UI thread
+	// refresh left UI thread
 	go func() {
 		for {
-			<-doRefreshChan
+			<-doLeftRefreshChan
 
-			content := loadUI(projectsSwitch.Selected)
+			content := loadLeftUI(projectsSwitch.Selected)
 			leftContent.RemoveAll()
 			leftContent.Add(content)
 			leftContent.Refresh()
+
+			time.Sleep(time.Second)
+		}
+	}()
+
+	// refresh left UI thread
+	go func() {
+		for {
+			tableName := <-doRightRefreshChan
+
+			if tableName == "" {
+				mainContent.RemoveAll()
+			} else {
+				content := getTableUI(projectsSwitch.Selected, tableName)
+				mainContent.RemoveAll()
+				mainContent.Add(content)
+				mainContent.Refresh()
+			}
 
 			time.Sleep(time.Second)
 		}
@@ -137,7 +220,7 @@ func main() {
 			if b {
 				inputs := getFormInputs(content)
 				cl.CreateProject(inputs["name"])
-				content := loadUI(inputs["name"])
+				content := loadLeftUI(inputs["name"])
 				leftContent.RemoveAll()
 				leftContent.Add(content)
 				leftContent.Refresh()
@@ -150,7 +233,7 @@ func main() {
 		widget.NewSeparator(),
 	)
 
-	windowContent := container.NewBorder(topBar, nil, leftContent, nil, nil)
+	windowContent := container.NewBorder(topBar, nil, leftContent, nil, mainContent)
 
 	myWindow.SetContent(windowContent)
 	myWindow.Resize(fyne.NewSize(1200, 600))
