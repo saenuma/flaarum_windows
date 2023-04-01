@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/getlantern/systray v1.2.1
 	github.com/gorilla/mux v1.8.0
+	github.com/saenuma/flaarum v1.9.7
 )
 
 require (
@@ -16,6 +17,8 @@ require (
 	github.com/getlantern/ops v0.0.0-20190325191751-d70cb0d6f85f // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/saenuma/zazabul v1.1.4 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 )

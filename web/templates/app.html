@@ -1,1 +1,91 @@
-<h1>Home</h1>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Flaarum Web Admin</title>
+    <script src="/gs/jquery-3.6.0.min.js"></script>
+    <style>
+      #sidebar {
+        width: 150px;
+        float: left;
+        background-color: #ddd;
+      }
+
+      #main {
+        width: calc(100% - 200px);
+        margin-left: 180px;
+      }
+      
+      h1, h2, h3 {
+        margin: 0px;
+      }
+
+      #topbar {
+        width: fit-content;
+        margin: 0 auto;
+      }
+
+    </style>
+
+    <script>
+      $(document).ready(function() {
+        const newProjectDialog = document.getElementById('new_project_diag');
+
+        $("#new_project_btn").click(function(e) {
+          newProjectDialog.showModal();
+        });
+
+        $("#projects_switch").on("change", function(e) {
+          window.location.href = "/?project=" + $("#projects_switch").val()
+
+        })
+
+      })
+
+    </script>
+  </head>
+  <body>
+    <div id="topbar">
+      <select id="projects_switch" >
+        {{range .Projects}}
+          {{if eq $.CurrentProject .}}
+            <option selected="selected">{{.}}</option>
+          {{else}}
+            <option>{{.}}</option>
+          {{end}}
+        {{end}}
+      </select>
+      &nbsp;&nbsp;
+      <button id="new_project_btn">New Project</button>
+      &nbsp;&nbsp;
+      <button id="refresh_btn">Refresh</button>
+    </div>
+    <hr>
+    <div id="container">
+      <div id="sidebar">
+        <h3>Tables</h3>
+        {{range .TablesOfCurrentProject}}
+          <a href="#" class="load_table_href">{{.}}</a>
+        {{end}}
+      </div>
+      <div id="main">
+
+      </div>
+    </div>
+    <dialog id="new_project_diag">
+      <h3>New Project</h3>
+      <br>
+      <form method="post" action="/new_project">
+        <div>
+          <label>Project Name</label><br>
+          <input type="text" name="name" />
+        </div>
+        <br>
+        <div>
+          <input type="submit" name="Create" />
+        </div>
+        <br>
+        <i>Press ESC to dismiss</i>
+      </form>
+    </dialog>
+  </body>
+</html>
