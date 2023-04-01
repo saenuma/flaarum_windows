@@ -3,13 +3,19 @@
   <head>
     <title>Flaarum Web Admin</title>
     <script src="/gs/jquery-3.6.0.min.js"></script>
+    <script src="/gs/autosize.min.js"></script>
     <style>
       #sidebar {
         width: 150px;
         float: left;
         background-color: #ddd;
+        padding: 10px;
       }
 
+      #sidebar * {
+        margin-bottom: 10px;
+        display: block;
+      }
       #main {
         width: calc(100% - 200px);
         margin-left: 180px;
@@ -24,20 +30,30 @@
         margin: 0 auto;
       }
 
+      textarea {
+        width: 400px;
+      }
+
     </style>
 
     <script>
       $(document).ready(function() {
-        const newProjectDialog = document.getElementById('new_project_diag');
+        autosize($("textarea"))
+
 
         $("#new_project_btn").click(function(e) {
+          const newProjectDialog = document.getElementById('new_project_diag');
           newProjectDialog.showModal();
         });
 
         $("#projects_switch").on("change", function(e) {
           window.location.href = "/?project=" + $("#projects_switch").val()
-
         })
+
+        $("#new_table_btn").click(function(e) {
+          const newTableDialog = document.getElementById('new_table_diag');
+          newTableDialog.showModal();
+        });
 
       })
 
@@ -58,6 +74,8 @@
       <button id="new_project_btn">New Project</button>
       &nbsp;&nbsp;
       <button id="refresh_btn">Refresh</button>
+      &nbsp;&nbsp;
+      <button id="new_table_btn">New Table</button>
     </div>
     <hr>
     <div id="container">
@@ -71,6 +89,7 @@
 
       </div>
     </div>
+
     <dialog id="new_project_diag">
       <h3>New Project</h3>
       <br>
@@ -78,6 +97,24 @@
         <div>
           <label>Project Name</label><br>
           <input type="text" name="name" />
+        </div>
+        <br>
+        <div>
+          <input type="submit" name="Create" />
+        </div>
+        <br>
+        <i>Press ESC to dismiss</i>
+      </form>
+    </dialog>
+
+    <dialog id="new_table_diag">
+      <h3>New Table</h3>
+      <br>
+      <form method="post" action="/new_table">
+        <input type="hidden" name="current_project" value="{{.CurrentProject}}" />
+        <div>
+          <label>Table Definition Statement</label><br>
+          <textarea name="stmt"></textarea>
         </div>
         <br>
         <div>

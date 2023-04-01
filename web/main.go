@@ -88,6 +88,8 @@ func main() {
 			currentProject = r.FormValue("project")
 		}
 
+		cl.ProjName = currentProject
+
 		tables, err := cl.ListTables()
 		if err != nil {
 			ErrorPage(w, err)
@@ -105,6 +107,7 @@ func main() {
 
 	r.HandleFunc("/", homeHandler)
 	r.HandleFunc("/new_project", newProjectHandler)
+	r.HandleFunc("/new_table", newTableHandler)
 
 	http.ListenAndServe(":31314", r)
 }
