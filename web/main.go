@@ -74,7 +74,7 @@ func main() {
 		w.Write(rawObj)
 	})
 
-	homeHandler := func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		projects, err := cl.ListProjects()
 		if err != nil {
 			ErrorPage(w, err)
@@ -103,11 +103,10 @@ func main() {
 		}
 		tmpl := template.Must(template.ParseFS(content, "templates/app.html"))
 		tmpl.Execute(w, Context{projects, tables, currentProject})
-	}
-
-	r.HandleFunc("/", homeHandler)
+	})
 	r.HandleFunc("/new_project", newProjectHandler)
 	r.HandleFunc("/new_table", newTableHandler)
+	r.HandleFunc("/load_table", loadTableHandler)
 
 	http.ListenAndServe(":31314", r)
 }

@@ -55,6 +55,13 @@
           newTableDialog.showModal();
         });
 
+        $(".load_table_href").click(function(e) {
+          e.preventDefault()
+
+          $.get("/load_table?table=" + $(e.target).text() + "&project=" + $("#projects_switch").val(), function(data, status) {
+            $("#main").html(data)
+          })
+        })
       })
 
     </script>
