@@ -151,3 +151,26 @@ func inserRowHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, "ok")
 }
+
+func loadTableStructureHandler(w http.ResponseWriter, r *http.Request) {
+	cl := getFlaarumClient()
+	cl.ProjName = r.FormValue("project")
+	tableName := r.FormValue("table")
+
+	vnum, _ := cl.GetCurrentTableVersionNum(tableName)
+	tableStructure, _ := cl.GetTableStructure(tableName, vnum)
+	fmt.Fprint(w, tableStructure)
+}
+
+func updateTableStructureHandler(w http.ResponseWriter, r *http.Request) {
+	cl := getFlaarumClient()
+	cl.ProjName = r.FormValue("current_project")
+
+	err := cl.UpdateTableStructure(r.FormValue("stmt"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err.Error())
+	}
+
+	fmt.Fprint(w, "ok")
+}

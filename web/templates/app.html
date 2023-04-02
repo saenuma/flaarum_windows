@@ -11,7 +11,7 @@
       #sidebar {
         width: 250px;
         float: left;
-        background-color: #ddd;
+        background-color: #E5E5DF;
         padding: 10px;
         height: 90vh;
       }
@@ -89,6 +89,26 @@
                 const insertRowDialog = document.getElementById('insert_row_diag');
                 insertRowDialog.showModal();
               })
+            });
+
+            $("#view_table_structure_btn").click(function(e) {
+              $("#view_table_structure_diag h3").text("View Table Structure of " + $(e.target).data("table"))
+              const addr = "/load_table_structure?table=" + $(e.target).data("table") +  "&project=" + $("#projects_switch").val()
+              $.get(addr, function(data, status) {
+                $("#view_table_structure_diag div").html("<pre>" + data + "</pre>")
+                const viewTableStructureDialog = document.getElementById('view_table_structure_diag');
+                viewTableStructureDialog.showModal()
+              })
+            })
+
+            $("#edit_table_structure_btn").click(function(e) {
+              $("#edit_table_structure_diag h3").text("Update Table Structure of " + $(e.target).data("table"))
+              const addr = "/load_table_structure?table=" + $(e.target).data("table") +  "&project=" + $("#projects_switch").val()
+              $.get(addr, function(data, status) {
+                $("#edit_table_structure_diag textarea").text(data)
+                const editTableStructureDialog = document.getElementById('edit_table_structure_diag');
+                editTableStructureDialog.showModal()
+              })
             })
           })
         })
@@ -107,7 +127,26 @@
               $("#insert_row_diag").append(data)
             }
 
-            $("#id_tbl_" + data["_table"]).click()
+            location.reload()
+          })
+
+        })
+
+        $("#edit_table_structure_diag input[type=submit]").click(function(e) {
+          e.preventDefault()
+
+          var data = $("#edit_table_structure_diag form").serialize()
+
+          $.post("/update_table_structure", data, function(data, status, xhr) {
+            const tsDialog = document.getElementById('edit_table_structure_diag');
+
+            if (xhr.status == 200) {
+              tsDialog.close()
+            } else {
+              $("#edit_table_structure_diag").append(data)
+            }
+
+            location.reload()
           })
 
         })
@@ -204,6 +243,32 @@
         <br>
         <i>Press ESC to dismiss</i>
       </form>
+    </dialog>
+
+    <dialog id="view_table_structure_diag">
+      <h3></h3>
+      <div>
+
+      </div>
+      <br>
+      <i>Press ESC to dismiss</i>
+    </dialog>
+
+    <dialog id="edit_table_structure_diag">
+      <h3></h3>
+      <form action="/update_table_structure" method="post">
+        <input type="hidden" name="current_project" value="{{.CurrentProject}}" />
+
+        <div>
+          <textarea name="stmt"></textarea>
+        </div>
+        <br>
+        <div>
+          <input type="submit" name="Create" />
+        </div>
+      </form>
+      <br>
+      <i>Press ESC to dismiss</i>
     </dialog>
   </body>
 </html>
