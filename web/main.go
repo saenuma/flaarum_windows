@@ -107,6 +107,8 @@ func main() {
 	r.HandleFunc("/new_project", newProjectHandler)
 	r.HandleFunc("/new_table", newTableHandler)
 	r.HandleFunc("/load_table", loadTableHandler)
+	r.HandleFunc("/load_insert_frag", loadInsertForm)
+	r.HandleFunc("/insert_row", inserRowHandler)
 
 	http.ListenAndServe(":31314", r)
 }
