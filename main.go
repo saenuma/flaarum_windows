@@ -91,7 +91,7 @@ func onReady() {
 		exec.Command("cmd", "/C", "start", flaarumFolder).Run()
 	}()
 
-	openFlaarumExecsFolder := systray.AddMenuItem("Open Flaarum Execs folder", "Open Flaarum folder")
+	openFlaarumExecsFolder := systray.AddMenuItem("Open Flaarum Execs folder", "Open Flaarum Execs folder")
 	go func() {
 		<-openFlaarumExecsFolder.ClickedCh
 		exec.Command("cmd", "/C", "start", flaarumExecsPath).Run()
