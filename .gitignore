@@ -17,3 +17,5 @@ tmp/
 
 !artifacts/*.exe
 *.msix
+artifacts/https-server.crt
+artifacts/https-server.key
