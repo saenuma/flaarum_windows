@@ -68,7 +68,8 @@ func onReady() {
 
 	go func() {
 		absFlStorePath := filepath.Join(flaarumExecsPath, "flstore.exe")
-		exec.Command(absFlStorePath).Run()
+		err := exec.Command(absFlStorePath).Run()
+		panic(err)
 	}()
 
 	systray.SetIcon(logoBytes)
