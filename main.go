@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"log"
 	"os"
@@ -16,8 +17,7 @@ var logoBytes []byte
 
 //go:embed "artifacts"
 var artifactsDir embed.FS
-
-const ARTIFACTS_VERSION = "3"
+var StoreCancelFn context.CancelFunc
 
 func main() {
 	systray.Run(onReady, onExit)
@@ -46,8 +46,10 @@ func onReady() {
 		}
 
 	} else {
+		onSysVersionRaw, _ := os.ReadFile(filepath.Join(flaarumExecsPath, "version.txt"))
+
 		versionRaw, _ := artifactsDir.ReadFile("artifacts/version.txt")
-		if strings.TrimSpace(string(versionRaw)) != ARTIFACTS_VERSION {
+		if strings.TrimSpace(string(versionRaw)) != strings.TrimSpace(string(onSysVersionRaw)) {
 			dirFIs, err := artifactsDir.ReadDir("artifacts")
 			if err != nil {
 				log.Println(err)
@@ -67,9 +69,11 @@ func onReady() {
 	}
 
 	go func() {
+		flStoreCtx, cancelFn := context.WithCancel(context.Background())
+		StoreCancelFn = cancelFn
 		absFlStorePath := filepath.Join(flaarumExecsPath, "flstore.exe")
-		err := exec.Command(absFlStorePath).Run()
-		panic(err)
+		cmd := exec.CommandContext(flStoreCtx, absFlStorePath)
+		cmd.Run()
 	}()
 
 	systray.SetIcon(logoBytes)
@@ -109,6 +113,7 @@ func onReady() {
 
 func onExit() {
 	// clean up here
+	StoreCancelFn()
 }
 
 func DoesPathExists(p string) bool {
